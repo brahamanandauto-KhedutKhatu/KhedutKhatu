@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>શ્રી ક્રિષ્ના વેજીટેબલ - ઇન્વોઇસ અને લેજર સિસ્ટમ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+	
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        
+        @media print {
+            body { background: white !important; -webkit-print-color-adjust: exact; color: #000 !important; }
+            .no-print { display: none !important; }
+            #invoiceModal { position: absolute !important; inset: 0 !important; background: transparent !important; backdrop-filter: none !important; padding: 0 !important; display: block !important; }
+            .print-container { border: 2px solid #000 !important; box-shadow: none !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
+            aside, header { display: none !important; }
+            main { padding: 0 !important; margin: 0 !important; }
+            input { border: none !important; outline: none !important; background: transparent !important; }
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-100 flex font-sans text-slate-900 selection:bg-emerald-100 selection:text-emerald-900">
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobileOverlay" class="fixed inset-0 bg-slate-900/40 z-40 lg:hidden backdrop-blur-sm transition-opacity hidden" onclick="toggleMobileMenu()"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white border-r border-slate-800 transform -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:w-72 flex flex-col shadow-lg lg:shadow-none no-print">
+        <div class="h-20 flex items-center px-8 border-b border-slate-800">
+            <div class="bg-emerald-600 p-2.5 rounded-xl mr-3 shadow-inner">
+                <i data-lucide="leaf" class="text-white w-5 h-5"></i>
+            </div>
+            <div>
+                <span class="text-xl font-black tracking-tight text-white block">શ્રી ક્રિષ્ના</span>
+                <span class="text-xs font-semibold text-emerald-400">વેજીટેબલ ટ્રેડિંગ</span>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+            <p class="px-4 text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">મુખ્ય મેનૂ</p>
+            
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center px-4 py-3 rounded-xl transition-all font-semibold text-sm bg-emerald-600 text-white shadow-md">
+                <i data-lucide="layout-dashboard" class="mr-3 w-5 h-5"></i> ડેશબોર્ડ અને રિપોર્ટ
+            </button>
+
+            <button onclick="switchView('invoices')" id="nav-invoices" class="w-full flex items-center px-4 py-3 rounded-xl transition-all font-semibold text-sm text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i data-lucide="file-text" class="mr-3 w-5 h-5 text-emerald-400"></i> ખરીદ/વેચાણ બિલ (Invoices)
+            </button>
+
+            <button onclick="switchView('cashbook')" id="nav-cashbook" class="w-full flex items-center px-4 py-3 rounded-xl transition-all font-semibold text-sm text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i data-lucide="wallet" class="mr-3 w-5 h-5 text-green-400"></i> કેશબુક / Cash In-Out
+            </button>
+
+            <button onclick="switchView('ledger')" id="nav-ledger" class="w-full flex items-center px-4 py-3 rounded-xl transition-all font-semibold text-sm text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i data-lucide="book-open" class="mr-3 w-5 h-5 text-amber-400"></i> લેજર રિપોર્ટ (Ledger)
+            </button>
+
+            <button onclick="switchView('inventory')" id="nav-inventory" class="w-full flex items-center px-4 py-3 rounded-xl transition-all font-semibold text-sm text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i data-lucide="package" class="mr-3 w-5 h-5 text-indigo-400"></i> શાકભાજી આઇટમ (Items)
+            </button>
+
+            <button onclick="switchView('parties')" id="nav-parties" class="w-full flex items-center px-4 py-3 rounded-xl transition-all font-semibold text-sm text-slate-300 hover:bg-slate-800 hover:text-white">
+                <i data-lucide="users" class="mr-3 w-5 h-5 text-sky-400"></i> ગ્રાહકોની યાદી (Parties)
+            </button>
+        </nav>
+		<div class="px-4 pb-4">
+            <button onclick="downloadCurrentPage()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl flex items-center justify-center font-bold text-sm shadow-md transition-all">
+                <i data-lucide="download" class="w-4 h-4 mr-2"></i> ફાઇલ ડાઉનલોડ કરો
+            </button>
+        </div>
+
+        <div class="p-6 border-t border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="h-20 w-15 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-white shadow">
+                    શ્રી ક્રિષ્ના
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-white">રણમલપુર-૩૬૩૩૩૦</p>
+					<p class="text-sm font-bold text-white">તા. હળવદ, જી. મોરબી</p>
+                    <p class="text-xs text-slate-400">મોબાઇલ: +૯૧ ૯૮૯૮૬ ૩૫૬૦૧</p>
+					<p class="text-xs text-slate-400">મોબાઇલ: +૯૧ ૯૭૨૭૬ ૩૦૯૪૦</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Section -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 z-10 sticky top-0 shadow-xs no-print">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleMobileMenu()" class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 focus:outline-none">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <h1 id="pageTitle" class="text-xl font-bold text-slate-900">ડેશબોર્ડ</h1>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="openInvoiceModal('Purchase')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl flex items-center font-semibold text-xs sm:text-sm shadow-sm transition-all">
+                    <i data-lucide="plus" class="w-4 h-4 mr-1"></i> ખરીદ બિલ (Purchase)
+                </button>
+                <button onclick="openInvoiceModal('Sale')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl flex items-center font-semibold text-xs sm:text-sm shadow-sm transition-all">
+                    <i data-lucide="plus" class="w-4 h-4 mr-1"></i> વેચાણ બિલ (Sale)
+                </button>
+                <button onclick="switchView('cashbook'); setCashTransactionType('In')" class="bg-green-600 hover:bg-green-700 text-white px-3.5 py-2 rounded-xl flex items-center font-semibold text-xs sm:text-sm shadow-sm transition-all whitespace-nowrap">
+                    <i data-lucide="plus-circle" class="w-4 h-4 mr-1"></i> Cash In
+                </button>
+                <button onclick="switchView('cashbook'); setCashTransactionType('Out')" class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl flex items-center font-semibold text-xs sm:text-sm shadow-sm transition-all whitespace-nowrap">
+                    <i data-lucide="minus-circle" class="w-4 h-4 mr-1"></i> Cash Out
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 sm:p-8">
+            <div class="max-w-7xl mx-auto" id="appContent">
+                <!-- Dynamic Content Here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Professional Invoice Modal -->
+    <div id="invoiceModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden border border-slate-200 animate-fade-in max-h-[95vh] flex flex-col print-container">
+            
+            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 no-print">
+                <h3 id="modalHeaderTitle" class="text-lg font-bold text-slate-900">બિલ ફોર્મેટ અને પ્રિન્ટ</h3>
+                <div class="flex items-center gap-2">
+                    <button onclick="printInvoicePreview()" class="bg-emerald-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 hover:bg-emerald-800 shadow-sm"><i data-lucide="printer" class="w-4 h-4"></i> બિલ પ્રિન્ટ કરો</button>
+                    <button onclick="closeInvoiceModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+            </div>
+
+            <form id="invoiceForm" onsubmit="handleSaveInvoice(event)" class="p-8 space-y-6 overflow-y-auto flex-1 bg-white">
+                
+                <div class="text-center border-b-2 border-slate-800 pb-4">
+                    <h2 class="text-3xl font-black text-emerald-900 tracking-wide">|| શ્રી ક્રિષ્ના વેજીટેબલ ||</h2>
+                    <p class="text-sm font-bold text-slate-700 mt-1">શાકભાજીના જથ્થાબંધ વેપારી અને કમીશન એજન્ટ</p>
+                    <p class="text-xs text-slate-600 mt-0.5">મુ. રણમલપુર - ૩૬૩૩૩૦, તા. હળવદ, જી. મોરબી | મો. ૯૮૯૮૬ ૩૫૬૦૧, ૯૭૨૭૬ ૩૦૯૪૦</p>
+                    <div id="invoiceTypeBadge" class="mt-3 inline-block bg-slate-900 text-white px-6 py-1 rounded-full text-xs font-bold tracking-wider uppercase">ખરીદ બિલ (Purchase Bill)</div>
+                </div>
+
+                <!-- Customer Details Input -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-300 text-sm no-print">
+                    <input type="hidden" id="invType" value="Purchase">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">ગ્રાહક પસંદ કરો:</label>
+                        <select id="partyDropdown" onchange="onPartySelected(this)" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <option value="">-- ગ્રાહક પસંદ કરો --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">નામ:</label>
+                        <input type="text" id="invPartyName" oninput="syncPrintHeader()" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">સરનામું:</label>
+                        <input type="text" id="invPartyAddress" oninput="syncPrintHeader()" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">મોબાઇલ નંબર:</label>
+                        <input type="text" id="invPartyMobile" oninput="syncPrintHeader()" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">બિલ નં.:</label>
+                        <input type="text" id="invNumber" oninput="syncPrintHeader()" required class="w-full bg-emerald-50 border border-emerald-300 rounded-lg px-3 py-1.5 text-sm font-bold text-emerald-800 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">તારીખ:</label>
+                        <input type="date" id="invDate" onchange="syncPrintHeader()" required class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+					<div class="sm:col-span-3 pt-2 border-t border-slate-200 flex items-center gap-6">
+                        <label class="block text-xs font-bold text-slate-700">ચુકવણીનો પ્રકાર (Payment Mode):</label>
+                        <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-sm">
+                            <input type="radio" name="paymentMode" value="Cash" checked class="text-emerald-600 focus:ring-emerald-500"> રોકડ (Cash In/Out)
+                        </label>
+                        <label class="inline-flex items-center gap-2 cursor-pointer font-bold text-sm">
+                            <input type="radio" name="paymentMode" value="Debit" class="text-emerald-600 focus:ring-emerald-500"> ઉધાર (Debit / Credit)
+                        </label>
+                    </div>
+
+                </div>
+
+                <!-- Printable Header -->
+                <div class="hidden print:grid grid-cols-2 gap-4 text-sm font-semibold border-b border-slate-800 pb-3">
+                    <div>
+                        <p><span class="font-bold">બિલ પ્રકાર:</span> <span id="printInvoiceType" class="uppercase"></span></p>
+                        <p><span class="font-bold">ગ્રાહકનું નામ:</span> <span id="printPartyName" class="font-bold"></span></p>
+                        <p><span class="font-bold">સરનામું:</span> <span id="printPartyAddress"></span></p>
+                        <p><span class="font-bold">મોબાઇલ:</span> <span id="printPartyMobile"></span></p>
+                    </div>
+                    <div class="text-right">
+                        <p><span class="font-bold">બિલ નં.:</span> <span id="printInvNumber" class="font-bold"></span></p>
+                        <p><span class="font-bold">તારીખ:</span> <span id="printInvDate"></span></p>
+						<p><span class="font-bold">ચુકવણી પ્રકાર:</span> <span id="printPaymentMode" class="uppercase bg-slate-200 px-2 py-0.5 rounded text-xs"></span></p>
+                    </div>
+                </div>
+
+                <!-- Table Items -->
+                <div>
+                    <div class="flex justify-between items-center mb-2 no-print">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500">વસ્તુઓની વિગતો</span>
+                        <button type="button" onclick="addInvoiceItemRow()" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center"><i data-lucide="plus" class="w-3.5 h-3.5 mr-1"></i> નવી રો ઉમેરો</button>
+                    </div>
+                    <div class="overflow-x-auto border-2 border-slate-800 rounded-xl">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-900 text-xs uppercase font-bold border-b-2 border-slate-800">
+                                    <th class="p-2 border-r border-slate-300 w-12 text-center">અનુ.</th>
+                                    <th class="p-2 border-r border-slate-300 no-print w-40">આઇટમ પસંદ કરો</th>
+                                    <th class="p-2 border-r border-slate-300">વસ્તુનું નામ / વિગત</th>
+                                    <th class="p-2 border-r border-slate-300 w-24 text-center">પેકિંગ KG</th>
+                                    <th class="p-2 border-r border-slate-300 w-20 text-center">જથ્થો</th>
+                                    <th class="p-2 border-r border-slate-300 w-24 text-center">કુલ વજન KG</th>
+                                    <th class="p-2 border-r border-slate-300 w-24 text-center">ભાવ (₹)</th>
+                                    <th class="p-2 w-28 text-right">કુલ રકમ</th>
+                                    <th class="p-2 w-10 no-print"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoiceItemsTableBody" class="divide-y divide-slate-300"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Totals -->
+                <div class="flex flex-col items-end space-y-2 pt-2 border-t-2 border-slate-800">
+                    <div class="flex justify-between w-full sm:w-80 text-sm">
+                        <span class="font-bold text-slate-700">સબ ટોટલ:</span>
+                        <span id="subTotalDisplay" class="font-bold text-slate-900">₹0.00</span>
+                    </div>
+                    <div class="flex justify-between w-full sm:w-80 text-sm items-center">
+                        <span class="font-bold text-slate-700">મજુરી (Labor):</span>
+                        <input type="number" id="laborChargeInput" value="0" step="0.01" oninput="onLaborInputChange()" class="w-28 text-right bg-white border border-slate-300 rounded px-2 py-1 text-sm font-bold text-slate-900 outline-none">
+                    </div>
+                    <div class="flex justify-between w-full sm:w-80 text-base border-t-2 border-slate-800 pt-2 bg-emerald-50 px-3 py-1.5 rounded-lg">
+                        <span class="font-black text-emerald-900">કુલ ચુકવવાપાત્ર:</span>
+                        <span id="grandTotalDisplay" class="font-black text-emerald-800 text-lg">₹0.00</span>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 no-print border-t border-slate-200">
+                    <button type="button" onclick="closeInvoiceModal()" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl">રદ કરો</button>
+                    <button type="button" onclick="closeInvoiceModal()" class="px-5 py-2.5 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-xl shadow-md">Done</button>
+                    <button type="button" onclick="sendWhatsAppInvoice()" class="px-5 py-2.5 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl shadow-md flex items-center gap-1.5">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i> Send WhatsApp
+                    </button>
+                    <button type="submit" class="px-6 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md">બિલ સેવ કરો</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Banner -->
+    <div id="notificationBanner" class="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 transform translate-y-24 opacity-0 transition-all duration-300">
+        <i data-lucide="check-circle" class="text-emerald-400 w-5 h-5"></i>
+        <span id="notificationText" class="text-sm font-medium">કાર્ય સફળતાપૂર્વક પૂર્ણ થયું</span>
+    </div>
+
+    <script>
+        let currentView = 'dashboard';
+        let ledgerTab = 'party'; 
+        let selectedLedgerParty = '';
+        let selectedLedgerItem = '';
+        let isLaborManual = false;
+
+        let editingItemId = null;
+        let editingPartyId = null;
+
+        let inventory = JSON.parse(localStorage.getItem('skv_inventory')) || [
+            { id: '1', name: 'રેવા મરચી', packing: 10, price: 25 },
+            { id: '2', name: 'સાન્યા મરચી', packing: 8, price: 25 },
+            { id: '3', name: 'ખીરા કાકડી', packing: 5, price: 20 }
+        ];
+
+        let parties = JSON.parse(localStorage.getItem('skv_parties')) || [
+            { id: '1', name: 'પટેલ જયદિપભાઈ દિલીપભાઈ', address: 'માલણીયાદ', mobile: '9974754274' },
+            { id: '2', name: 'patel vishal dilipbhai', address: 'malaniyad', mobile: '7600169045' }
+        ];
+
+        let invoices = JSON.parse(localStorage.getItem('skv_invoices')) || [];
+        let cashTransactions = JSON.parse(localStorage.getItem('skv_cash_transactions')) || [];
+
+        function saveData() {
+            localStorage.setItem('skv_inventory', JSON.stringify(inventory));
+            localStorage.setItem('skv_parties', JSON.stringify(parties));
+            localStorage.setItem('skv_invoices', JSON.stringify(invoices));
+            localStorage.setItem('skv_cash_transactions', JSON.stringify(cashTransactions));
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
+        }
+
+        function showNotification(msg) {
+            const banner = document.getElementById('notificationBanner');
+            document.getElementById('notificationText').innerText = msg;
+            banner.classList.remove('translate-y-24', 'opacity-0');
+            setTimeout(() => banner.classList.add('translate-y-24', 'opacity-0'), 3000);
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('mobileOverlay').classList.toggle('hidden');
+        }
+
+        function syncPrintHeader() {
+            const type = document.getElementById('invType').value;
+            const paymentMode = document.querySelector('input[name="paymentMode"]:checked')?.value || 'Cash';
+            document.getElementById('printInvoiceType').innerText = type === 'Sale' ? 'વેચાણ બિલ (SALE)' : 'ખરીદ બિલ (PURCHASE)';
+            document.getElementById('printPartyName').innerText = document.getElementById('invPartyName').value || '-';
+            document.getElementById('printPartyAddress').innerText = document.getElementById('invPartyAddress').value || '-';
+            document.getElementById('printPartyMobile').innerText = document.getElementById('invPartyMobile').value || '-';
+            document.getElementById('printInvNumber').innerText = document.getElementById('invNumber').value || '-';
+            document.getElementById('printInvDate').innerText = document.getElementById('invDate').value || '-';
+            document.getElementById('printPaymentMode').innerText = paymentMode === 'Cash' ? 'રોકડ (Cash)' : 'ઉધાર (Debit/Credit)';
+        }
+
+        function onPartySelected(select) {
+            const party = parties.find(p => p.name === select.value);
+            if(party) {
+                document.getElementById('invPartyName').value = party.name || '';
+                document.getElementById('invPartyAddress').value = party.address || '';
+                document.getElementById('invPartyMobile').value = party.mobile || '';
+            }
+            syncPrintHeader();
+        }
+
+        function switchView(view) {
+            currentView = view;
+            const titles = { 
+                dashboard: 'ડેશબોર્ડ અને રિપોર્ટ', 
+                invoices: 'ખરીદ અને વેચાણ બિલ યાદી', 
+                ledger: 'લેજર રિપોર્ટ (ખાતાવહી હિસાબ)',
+                inventory: 'શાકભાજી આઇટમ સ્ટોક',
+                parties: 'ગ્રાહકોની ડિરેક્ટરી',
+                cashbook: 'કેશબુક / Cash In-Out રિપોર્ટ' 
+            };
+            document.getElementById('pageTitle').innerText = titles[view] || 'ડેશબોર્ડ';
+
+            ['dashboard', 'invoices', 'ledger', 'inventory', 'parties', 'cashbook'].forEach(v => {
+                const btn = document.getElementById(`nav-${v}`);
+                if(btn) {
+                    btn.className = (v === view) 
+                        ? "w-full flex items-center px-4 py-3 rounded-xl transition-all font-semibold text-sm bg-emerald-600 text-white shadow-md"
+                        : "w-full flex items-center px-4 py-3 rounded-xl transition-all font-semibold text-sm text-slate-300 hover:bg-slate-800 hover:text-white";
+                }
+            });
+
+            renderViewContent();
+            lucide.createIcons();
+            if (window.innerWidth < 1024) toggleMobileMenu();
+        }
+
+        function renderViewContent() {
+            const container = document.getElementById('appContent');
+            
+            if (currentView === 'dashboard') {
+                const totalPurchase = invoices.filter(i => i.type === 'Purchase').reduce((acc, curr) => acc + curr.grandTotal, 0);
+                const totalSale = invoices.filter(i => i.type === 'Sale').reduce((acc, curr) => acc + curr.grandTotal, 0);
+                
+                // Cash In / Cash Out calculations
+                let totalCashIn = 0;
+                let totalCashOut = 0;
+                invoices.forEach(inv => {
+                    if(inv.paymentMode === 'Cash' || !inv.paymentMode) {
+                        if(inv.type === 'Sale') totalCashIn += inv.grandTotal;
+                        if(inv.type === 'Purchase') totalCashOut += inv.grandTotal;
+                    }
+                });
+
+                container.innerHTML = `
+                    <div class="space-y-6 animate-fade-in">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-indigo-600">
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">કુલ ખરીદ (Purchase)</p>
+                                <p class="text-2xl font-black text-slate-900 mt-1">${formatCurrency(totalPurchase)}</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-emerald-600">
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">કુલ વેચાણ (Sale)</p>
+                                <p class="text-2xl font-black text-slate-900 mt-1">${formatCurrency(totalSale)}</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-green-600">
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">રોકડ આવક (Cash In)</p>
+                                <p class="text-2xl font-black text-green-700 mt-1">${formatCurrency(totalCashIn)}</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-rose-600">
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">રોકડ જાવક (Cash Out)</p>
+                                <p class="text-2xl font-black text-rose-700 mt-1">${formatCurrency(totalCashOut)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (currentView === 'invoices') {
+                container.innerHTML = `
+                    <div class="space-y-6 animate-fade-in">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                                        <th class="p-4">બિલ નં</th>
+                                        <th class="p-4">પ્રકાર</th>
+                                        <th class="p-4">ચુકવણી</th>
+                                        <th class="p-4">ગ્રાહક</th>
+                                        <th class="p-4">તારીખ</th>
+                                        <th class="p-4">કુલ રકમ</th>
+                                        <th class="p-4 text-right no-print">ક્રિયા</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm">
+                                    ${invoices.map(inv => `
+                                        <tr>
+                                            <td class="p-4 font-bold">${inv.id}</td>
+                                            <td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold ${inv.type === 'Sale' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'}">${inv.type === 'Sale' ? 'વેચાણ' : 'ખરીદ'}</span></td>
+                                            <td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold ${inv.paymentMode === 'Cash' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}">${inv.paymentMode === 'Cash' ? 'રોકડ (Cash)' : 'ઉધાર (Debit)'}</span></td>
+                                            <td class="p-4 font-bold">${inv.partyName}</td>
+                                            <td class="p-4 text-slate-500">${inv.date}</td>
+                                            <td class="p-4 font-bold">${formatCurrency(inv.grandTotal)}</td>
+                                            <td class="p-4 text-right space-x-2 no-print">
+                                                <button onclick="openExistingInvoice('${inv.id}')" class="text-emerald-600 font-bold text-xs bg-emerald-50 px-2.5 py-1 rounded-lg">પ્રિન્ટ / એડિટ</button>
+                                                <button onclick="deleteInvoice('${inv.id}')" class="text-rose-600 font-bold text-xs bg-rose-50 px-2.5 py-1 rounded-lg">ડિલીટ</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else if (currentView === 'ledger') {
+                renderLedgerReport(container);
+            } else if (currentView === 'inventory') {
+                renderInventoryPage(container);
+            } else if (currentView === 'parties') {
+                renderPartiesPage(container);
+            } else if (currentView === 'cashbook') {
+                renderCashbookPage(container);
+            }
+        }
+
+        // --- CASH IN / CASH OUT & CASHBOOK ---
+        function setCashTransactionType(type) {
+            if (currentView !== 'cashbook') switchView('cashbook');
+            const typeSelect = document.getElementById('cashTxType');
+            if (!typeSelect) return;
+            typeSelect.value = type;
+            const form = document.getElementById('cashTransactionForm');
+            if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const amountField = document.getElementById('cashTxAmount');
+            if (amountField) setTimeout(() => amountField.focus(), 250);
+        }
+
+        function handleSaveCashTransaction(e) {
+            e.preventDefault();
+            const type = document.getElementById('cashTxType').value;
+            const date = document.getElementById('cashTxDate').value;
+            const party = document.getElementById('cashTxParty').value.trim();
+            const note = document.getElementById('cashTxNote').value.trim();
+            const amount = parseFloat(document.getElementById('cashTxAmount').value) || 0;
+            if (amount <= 0) { showNotification('રકમ 0 કરતાં વધારે દાખલ કરો.'); return; }
+            cashTransactions.unshift({ id: 'CASH-' + Date.now(), type, date, party, note, amount });
+            saveData();
+            renderViewContent();
+            showNotification(type === 'In' ? 'રોકડ આવક સેવ થઈ!' : 'રોકડ જાવક સેવ થઈ!');
+        }
+
+        function deleteCashTransaction(id) {
+            if (confirm('આ કેશ એન્ટ્રી ડિલીટ કરવી છે?')) {
+                cashTransactions = cashTransactions.filter(t => t.id !== id);
+                saveData();
+                renderViewContent();
+            }
+        }
+
+        function renderCashbookPage(container) {
+            const invoiceRows = invoices
+                .filter(inv => (inv.paymentMode === 'Cash' || !inv.paymentMode))
+                .map(inv => ({ id: inv.id, date: inv.date, type: inv.type === 'Sale' ? 'In' : 'Out',
+                    party: inv.partyName || '-', note: (inv.type === 'Sale' ? 'વેચાણ બિલ ' : 'ખરીદ બિલ ') + inv.id,
+                    amount: Number(inv.grandTotal) || 0, source: 'invoice' }));
+            const manualRows = cashTransactions.map(t => ({...t, source:'manual'}));
+            const rows = [...invoiceRows, ...manualRows].sort((a,b) => (a.date || '').localeCompare(b.date || '') || String(a.id).localeCompare(String(b.id)));
+            let cashIn = 0, cashOut = 0, balance = 0;
+            rows.forEach(r => { if (r.type === 'In') cashIn += r.amount; else cashOut += r.amount; });
+            const renderedRows = rows.map(r => {
+                balance += r.type === 'In' ? r.amount : -r.amount;
+                return {...r, balance};
+            }).reverse();
+            container.innerHTML = `
+              <div class="space-y-6 animate-fade-in">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 no-print">
+                  <button type="button" onclick="setCashTransactionType('In')" class="flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 text-white font-black text-lg px-6 py-5 rounded-2xl shadow-md transition-all"><span class="text-2xl">＋</span><span>રોકડ આવક (CASH IN)</span></button>
+                  <button type="button" onclick="setCashTransactionType('Out')" class="flex items-center justify-center gap-3 bg-rose-600 hover:bg-rose-700 text-white font-black text-lg px-6 py-5 rounded-2xl shadow-md transition-all"><span class="text-2xl">−</span><span>રોકડ જાવક (CASH OUT)</span></button>
+                </div>
+                <form id="cashTransactionForm" onsubmit="handleSaveCashTransaction(event)" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                  <h3 class="font-bold text-lg mb-4">નવી રોકડ એન્ટ્રી ઉમેરો (Cash In / Cash Out)</h3>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div><label class="block text-xs font-bold mb-1">એન્ટ્રી પ્રકાર</label>
+                      <select id="cashTxType" class="w-full border rounded-xl px-3 py-2 bg-slate-50"><option value="In">રોકડ આવક (Cash In)</option><option value="Out">રોકડ જાવક (Cash Out)</option></select></div>
+                    <div><label class="block text-xs font-bold mb-1">તારીખ</label><input id="cashTxDate" type="date" required value="${new Date().toISOString().slice(0,10)}" class="w-full border rounded-xl px-3 py-2 bg-slate-50"></div>
+                    <div><label class="block text-xs font-bold mb-1">પાર્ટી / નામ</label><select id="cashTxParty" class="w-full border rounded-xl px-3 py-2 bg-slate-50"><option value="">-- નામ પસંદ કરો --</option>${[...new Set([...parties.map(p => p.name), ...cashTransactions.map(t => t.party).filter(Boolean)])].sort((a,b)=>a.localeCompare(b)).map(name => `<option value="${name}">${name}</option>`).join('')}</select></div>
+                    <div><label class="block text-xs font-bold mb-1">રકમ (₹)</label><input id="cashTxAmount" type="number" min="0.01" step="0.01" required class="w-full border rounded-xl px-3 py-2 bg-slate-50" placeholder="0.00"></div>
+                    <div><label class="block text-xs font-bold mb-1">વિગત / કારણ</label><input id="cashTxNote" class="w-full border rounded-xl px-3 py-2 bg-slate-50" placeholder="જેમ કે ભાડું, અન્ય આવક"></div>
+                  </div>
+                  <button type="submit" class="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl">રોકડ એન્ટ્રી સેવ કરો</button>
+                </form>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div class="bg-white p-5 rounded-2xl border border-green-200"><p class="text-sm font-bold text-green-700">કુલ રોકડ આવક (Cash In)</p><p class="text-2xl font-black text-green-700">${formatCurrency(cashIn)}</p></div>
+                  <div class="bg-white p-5 rounded-2xl border border-rose-200"><p class="text-sm font-bold text-rose-700">કુલ રોકડ જાવક (Cash Out)</p><p class="text-2xl font-black text-rose-700">${formatCurrency(cashOut)}</p></div>
+                  <div class="bg-white p-5 rounded-2xl border border-indigo-200"><p class="text-sm font-bold text-indigo-700">ચોખ્ખી રોકડ બેલેન્સ</p><p class="text-2xl font-black text-indigo-700">${formatCurrency(cashIn-cashOut)}</p></div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div class="p-5 flex justify-between items-center gap-3"><h3 class="font-bold text-lg">કેશબુક રિપોર્ટ (Cashbook Report)</h3><button onclick="window.print()" class="no-print bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-sm">પ્રિન્ટ કરો</button></div>
+                  <div class="overflow-x-auto"><table class="w-full text-left border-collapse">
+                    <thead><tr class="bg-slate-100 text-xs"><th class="p-3">તારીખ</th><th class="p-3">એન્ટ્રી નં.</th><th class="p-3">પ્રકાર</th><th class="p-3">પાર્ટી / વિગત</th><th class="p-3 text-right">આવક ₹</th><th class="p-3 text-right">જાવક ₹</th><th class="p-3 text-right">બેલેન્સ ₹</th><th class="p-3 no-print">ક્રિયા</th></tr></thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                    ${renderedRows.length ? renderedRows.map(r => `<tr><td class="p-3">${r.date || '-'}</td><td class="p-3 font-bold">${r.id}</td><td class="p-3"><span class="px-2 py-1 rounded ${r.type==='In'?'bg-green-100 text-green-800':'bg-rose-100 text-rose-800'}">${r.type==='In'?'રોકડ આવક':'રોકડ જાવક'}</span></td><td class="p-3">${r.party || '-'} ${r.note ? '— '+r.note : ''}</td><td class="p-3 text-right font-bold text-green-700">${r.type==='In'?formatCurrency(r.amount):'-'}</td><td class="p-3 text-right font-bold text-rose-700">${r.type==='Out'?formatCurrency(r.amount):'-'}</td><td class="p-3 text-right font-bold">${formatCurrency(r.balance)}</td><td class="p-3 no-print">${r.source==='manual'?`<button onclick="deleteCashTransaction('${r.id}')" class="text-rose-600 font-bold">ડિલીટ</button>`:'બિલ'}</td></tr>`).join('') : '<tr><td colspan="8" class="p-5 text-center text-slate-400">હજુ કોઈ રોકડ એન્ટ્રી નથી.</td></tr>'}
+                    </tbody>
+                  </table></div>
+                  <p class="p-4 text-xs text-slate-500">નોંધ: રોકડ ખરીદ/વેચાણ બિલ આપમેળે કેશબુકમાં ગણાય છે. અહીં ઉમેરેલી અલગ રોકડ એન્ટ્રી પણ રિપોર્ટમાં દેખાશે.</p>
+                </div>
+              </div>`;
+        }
+
+        // --- INVENTORY MANAGEMENT ---
+        function renderInventoryPage(container) {
+            const editItemObj = editingItemId ? inventory.find(i => i.id === editingItemId) : null;
+
+            container.innerHTML = `
+                <div class="space-y-6 animate-fade-in">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg text-slate-900">${editItemObj ? '✏️ આઇટમમાં સુધારો કરો (Edit Item)' : '+ નવી શાકભાજી/આઇટમ ઉમેરો'}</h3>
+                            ${editItemObj ? `<button onclick="cancelItemEdit()" class="text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1 rounded-lg">રદ કરો</button>` : ''}
+                        </div>
+                        <form onsubmit="handleSaveItem(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">આઇટમનું નામ:</label>
+                                <input type="text" id="itemFormName" value="${editItemObj ? editItemObj.name : ''}" required placeholder="દા.ત. રેવા મરચી" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">પેકિંગ વજન (KG):</label>
+                                <input type="number" id="itemFormPacking" value="${editItemObj ? editItemObj.packing : ''}" required placeholder="10" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">ડિફોલ્ટ ભાવ (₹):</label>
+                                <input type="number" id="itemFormPrice" value="${editItemObj ? editItemObj.price : ''}" required placeholder="25" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div class="flex items-end">
+                                <button type="submit" class="w-full ${editItemObj ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white font-bold py-2 px-4 rounded-xl text-sm shadow-md transition-all">
+                                    ${editItemObj ? 'અપડેટ કરો' : 'આઇટમ સેવ કરો'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-800">
+                            ઉપલબ્ધ આઇટમ્સની યાદી
+                        </div>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 text-xs uppercase font-semibold">
+                                    <th class="p-4">આઇટમનું નામ</th>
+                                    <th class="p-4 text-center">પેકિંગ KG</th>
+                                    <th class="p-4 text-center">ભાવ (₹)</th>
+                                    <th class="p-4 text-right">ક્રિયા</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm">
+                                ${inventory.length === 0 ? `<tr><td colspan="4" class="p-4 text-center text-slate-400 font-bold">કોઈ આઇટમ ઉમેરેલી નથી.</td></tr>` : ''}
+                                ${inventory.map(item => `
+                                    <tr>
+                                        <td class="p-4 font-bold text-slate-900">${item.name}</td>
+                                        <td class="p-4 text-center font-semibold text-slate-700">${item.packing} KG</td>
+                                        <td class="p-4 text-center font-bold text-emerald-700">₹${item.price}</td>
+                                        <td class="p-4 text-right space-x-2">
+                                            <button onclick="startEditItem('${item.id}')" class="text-amber-600 bg-amber-50 hover:bg-amber-100 px-3 py-1 rounded-lg font-bold text-xs">એડિટ (Edit)</button>
+                                            <button onclick="deleteItem('${item.id}')" class="text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-1 rounded-lg font-bold text-xs">ડિલીટ</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function startEditItem(id) {
+            editingItemId = id;
+            renderViewContent();
+            lucide.createIcons();
+        }
+
+        function cancelItemEdit() {
+            editingItemId = null;
+            renderViewContent();
+            lucide.createIcons();
+        }
+
+        function handleSaveItem(e) {
+            e.preventDefault();
+            const name = document.getElementById('itemFormName').value.trim();
+            const packing = parseFloat(document.getElementById('itemFormPacking').value) || 0;
+            const price = parseFloat(document.getElementById('itemFormPrice').value) || 0;
+
+            if(editingItemId) {
+                const idx = inventory.findIndex(i => i.id === editingItemId);
+                if(idx >= 0) {
+                    inventory[idx] = { ...inventory[idx], name, packing, price };
+                    showNotification('આઇટમ સુધારી દેવામાં આવી છે!');
+                }
+                editingItemId = null;
+            } else {
+                inventory.push({ id: Date.now().toString(), name, packing, price });
+                showNotification('નવી આઇટમ સેવ થઈ ગઈ!');
+            }
+
+            saveData();
+            renderViewContent();
+        }
+
+        function deleteItem(id) {
+            if(confirm('શું તમે આ આઇટમ ડિલીટ કરવા માગો છો?')) {
+                inventory = inventory.filter(i => i.id !== id);
+                saveData();
+                renderViewContent();
+                showNotification('આઇટમ ડિલીટ કરવામાં આવી.');
+            }
+        }
+
+        // --- PARTIES MANAGEMENT ---
+        function renderPartiesPage(container) {
+            const editPartyObj = editingPartyId ? parties.find(p => p.id === editingPartyId) : null;
+
+            container.innerHTML = `
+                <div class="space-y-6 animate-fade-in">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg text-slate-900">${editPartyObj ? '✏️ ગ્રાહકની વિગતમાં સુધારો કરો (Edit Party)' : '+ નવો ગ્રાહક/પાર્ટી ઉમેરો'}</h3>
+                            ${editPartyObj ? `<button onclick="cancelPartyEdit()" class="text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1 rounded-lg">રદ કરો</button>` : ''}
+                        </div>
+                        <form onsubmit="handleSaveParty(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">ગ્રાહકનું પૂરૂં નામ:</label>
+                                <input type="text" id="partyFormName" value="${editPartyObj ? editPartyObj.name : ''}" required placeholder="દા.ત. પટેલ રમેશભાઈ" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">ગામ / સરનામું:</label>
+                                <input type="text" id="partyFormAddress" value="${editPartyObj ? editPartyObj.address : ''}" required placeholder="દા.ત. હળવદ" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">મોબાઇલ નંબર:</label>
+                                <input type="text" id="partyFormMobile" value="${editPartyObj ? editPartyObj.mobile : ''}" required placeholder="99747..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div class="flex items-end">
+                                <button type="submit" class="w-full ${editPartyObj ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white font-bold py-2 px-4 rounded-xl text-sm shadow-md transition-all">
+                                    ${editPartyObj ? 'અપડેટ કરો' : 'ગ્રાહક સેવ કરો'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-800">
+                            ગ્રાહકોની યાદી
+                        </div>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 text-xs uppercase font-semibold">
+                                    <th class="p-4">ગ્રાહકનું નામ</th>
+                                    <th class="p-4">સરનામું</th>
+                                    <th class="p-4">મોબાઇલ</th>
+                                    <th class="p-4 text-right">ક્રિયા</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm">
+                                ${parties.length === 0 ? `<tr><td colspan="4" class="p-4 text-center text-slate-400 font-bold">કોઈ ગ્રાહક ઉમેરેલ નથી.</td></tr>` : ''}
+                                ${parties.map(p => `
+                                    <tr>
+                                        <td class="p-4 font-bold text-slate-900">${p.name}</td>
+                                        <td class="p-4 font-medium text-slate-600">${p.address}</td>
+                                        <td class="p-4 font-bold text-slate-700">${p.mobile}</td>
+                                        <td class="p-4 text-right space-x-2">
+                                            <button onclick="startEditParty('${p.id}')" class="text-amber-600 bg-amber-50 hover:bg-amber-100 px-3 py-1 rounded-lg font-bold text-xs">એડિટ (Edit)</button>
+                                            <button onclick="deleteParty('${p.id}')" class="text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-1 rounded-lg font-bold text-xs">ડિલીટ</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function startEditParty(id) {
+            editingPartyId = id;
+            renderViewContent();
+            lucide.createIcons();
+        }
+
+        function cancelPartyEdit() {
+            editingPartyId = null;
+            renderViewContent();
+            lucide.createIcons();
+        }
+
+        function handleSaveParty(e) {
+            e.preventDefault();
+            const name = document.getElementById('partyFormName').value.trim();
+            const address = document.getElementById('partyFormAddress').value.trim();
+            const mobile = document.getElementById('partyFormMobile').value.trim();
+
+            if(editingPartyId) {
+                const idx = parties.findIndex(p => p.id === editingPartyId);
+                if(idx >= 0) {
+                    parties[idx] = { ...parties[idx], name, address, mobile };
+                    showNotification('ગ્રાહકની વિગત સુધારી દેવાઈ છે!');
+                }
+                editingPartyId = null;
+            } else {
+                parties.push({ id: Date.now().toString(), name, address, mobile });
+                showNotification('નવો ગ્રાહક ઉમેરાઈ ગયો!');
+            }
+
+            saveData();
+            renderViewContent();
+        }
+
+        function deleteParty(id) {
+            if(confirm('શું તમે આ ગ્રાહકને ડિલીટ કરવા માગો છો?')) {
+                parties = parties.filter(p => p.id !== id);
+                saveData();
+                renderViewContent();
+                showNotification('ગ્રાહક ડિલીટ થયો.');
+            }
+        }
+
+        // --- FULL LEDGER REPORT ---
+        function renderLedgerReport(container) {
+            container.innerHTML = `
+                <div class="space-y-6 animate-fade-in">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4 no-print">
+                        <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+                            <button onclick="setLedgerTab('party')" class="px-5 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all ${ledgerTab === 'party' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}">
+                                👤 ગ્રાહક વાઇઝ ખાતાવહી (Party Ledger)
+                            </button>
+                            <button onclick="setLedgerTab('item')" class="px-5 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all ${ledgerTab === 'item' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}">
+                                🥦 આઇટમ વાઇઝ લેજર (Item Ledger)
+                            </button>
+                        </div>
+                        <button onclick="window.print()" class="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center shadow-md">
+                            <i data-lucide="printer" class="w-4 h-4 mr-2"></i> પ્રિન્ટ કરો
+                        </button>
+                    </div>
+
+                    ${ledgerTab === 'party' ? getPartyLedgerHTML() : getItemLedgerHTML()}
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function setLedgerTab(tab) {
+            ledgerTab = tab;
+            renderViewContent();
+        }
+
+        // --- PARTY LEDGER HTML GENERATOR ---
+        function getPartyLedgerHTML() {
+            const partyInvoices = selectedLedgerParty 
+                ? invoices.filter(i => i.partyName === selectedLedgerParty)
+                : invoices;
+
+            let allTransactions = [];
+            let totalPartySale = 0;
+            let totalPartyPurchase = 0;
+            let cashInTotal = 0;
+            let cashOutTotal = 0;
+
+            // 1. Invoice transactions add karo
+            partyInvoices.forEach(inv => {
+                const isSale = inv.type === 'Sale';
+                const isCash = inv.paymentMode === 'Cash' || !inv.paymentMode;
+                
+                const debit = isSale ? inv.grandTotal : 0; 
+                const credit = !isSale ? inv.grandTotal : 0; 
+                
+                if (isSale) totalPartySale += inv.grandTotal;
+                else totalPartyPurchase += inv.grandTotal;
+
+                if (isCash) {
+                    if (isSale) cashInTotal += inv.grandTotal;
+                    else cashOutTotal += inv.grandTotal;
+                }
+
+                const itemsSummary = (inv.items || [])
+                    .map(item => `${item.name} (${item.weight}KG @ ₹${item.price})`)
+                    .join(', ');
+
+                allTransactions.push({
+                    id: inv.id,
+                    date: inv.date,
+                    type: inv.type,
+                    paymentMode: inv.paymentMode || 'Cash',
+                    partyName: inv.partyName,
+                    itemsSummary: itemsSummary || 'વિગત ઉપલબ્ધ નથી',
+                    debit,
+                    credit,
+                    isCash,
+                    isManualCash: false
+                });
+            });
+
+            // 2. Manual Cash In / Cash Out entries add karo
+            cashTransactions
+                .filter(t => !selectedLedgerParty || t.party === selectedLedgerParty)
+                .forEach(t => {
+                    const amount = Number(t.amount) || 0;
+                    if (t.type === 'In') cashInTotal += amount;
+                    else cashOutTotal += amount;
+
+                    allTransactions.push({
+                        id: t.id,
+                        date: t.date,
+                        type: t.type === 'In' ? 'Cash In' : 'Cash Out',
+                        paymentMode: 'Cash',
+                        partyName: t.party || 'નામ વગરની એન્ટ્રી',
+                        itemsSummary: t.note || (t.type === 'In' ? 'રોકડ આવક' : 'રોકડ જાવક'),
+                        debit: t.type === 'Out' ? amount : 0,
+                        credit: t.type === 'In' ? amount : 0,
+                        isCash: true,
+                        isManualCash: true
+                    });
+                });
+
+            // 3. Badhi transactions ne date pramane chronologically sort karo
+            allTransactions.sort((a, b) => (a.date || '').localeCompare(b.date || '') || String(a.id).localeCompare(String(b.id)));
+
+            // 4. Sequential running balance calculate karo
+            let runningBalance = 0;
+            const partyTransactions = allTransactions.map(tx => {
+                if (tx.isManualCash) {
+                    if (tx.type === 'Cash In') {
+                        runningBalance -= tx.credit; // Cash malva thi baki rakam ghate
+                    } else {
+                        runningBalance += tx.debit;  // Cash chukavva thi baki rakam vadhare
+                    }
+                } else {
+                    if (!tx.isCash) {
+                        runningBalance += (tx.debit - tx.credit);
+                    }
+                }
+                return {
+                    ...tx,
+                    balance: runningBalance
+                };
+            });
+
+            return `
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print-container">
+                    <div class="no-print mb-4 w-full sm:w-80">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">ગ્રાહક પસંદ કરો:</label>
+                        <select onchange="selectedLedgerParty = this.value; renderViewContent();" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <option value="">-- તમામ ગ્રાહકો (All Parties) --</option>
+                            ${[...new Set([...parties.map(p => p.name), ...cashTransactions.map(t => t.party).filter(Boolean)])].sort((a,b)=>a.localeCompare(b)).map(name => `<option value="${name}" ${selectedLedgerParty === name ? 'selected' : ''}>${name}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="text-center border-b pb-4 mb-4">
+                        <h2 class="text-2xl font-black text-slate-900">|| ગ્રાહક ખાતાવહી સ્ટેટમેન્ટ (Debit/Credit & Cash) ||</h2>
+                        <p class="text-sm font-bold text-emerald-800">શ્રી ક્રિષ્ના વેજીટેબલ - હળવદ / રણમલપુર</p>
+                        ${selectedLedgerParty ? `<p class="mt-2 text-base font-black bg-slate-100 inline-block px-4 py-1 rounded-full">ગ્રાહકનામ: ${selectedLedgerParty}</p>` : '<p class="text-xs text-slate-500 mt-1">તમામ ગ્રાહકોનો એકત્રિત હિસાબ</p>'}
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 text-center">
+                        <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200">
+                            <p class="text-xs font-bold text-emerald-800">કુલ વેચાણ (+)</p>
+                            <p class="text-lg font-black text-emerald-900">${formatCurrency(totalPartySale)}</p>
+                        </div>
+                        <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-200">
+                            <p class="text-xs font-bold text-indigo-800">કુલ ખરીદી (-)</p>
+                            <p class="text-lg font-black text-indigo-900">${formatCurrency(totalPartyPurchase)}</p>
+                        </div>
+                        <div class="bg-green-50 p-3 rounded-xl border border-green-200">
+                            <p class="text-xs font-bold text-green-800">રોકડ આવક (Cash In)</p>
+                            <p class="text-lg font-black text-green-900">${formatCurrency(cashInTotal)}</p>
+                        </div>
+                        <div class="bg-amber-50 p-3 rounded-xl border border-amber-200">
+                            <p class="text-xs font-bold text-amber-800">ઉધાર બાકી રકમ (Debit)</p>
+                            <p class="text-lg font-black ${runningBalance >= 0 ? 'text-emerald-700' : 'text-rose-700'}">${formatCurrency(Math.abs(runningBalance))} ${runningBalance >= 0 ? '(લેવાના)' : '(આપવાના)'}</p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse border border-slate-300 text-sm">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-800 text-xs font-bold border-b border-slate-300">
+                                    <th class="p-3 border-r">તારીખ</th>
+                                    <th class="p-3 border-r">બિલ નં.</th>
+                                    <th class="p-3 border-r">ચુકવણી પ્રકાર</th>
+                                    <th class="p-3 border-r">ગ્રાહક</th>
+                                    <th class="p-3 border-r">આઇટમ્સ</th>
+                                    <th class="p-3 border-r text-right">ઉધાર / Debit ₹</th>
+                                    <th class="p-3 border-r text-right">જમા / Credit ₹</th>
+                                    <th class="p-3 text-right">બાકી Balance ₹</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                ${partyTransactions.length === 0 ? `
+                                    <tr><td colspan="8" class="p-4 text-center text-slate-400 font-bold">કોઈ એન્ટ્રી મળી નથી.</td></tr>
+                                ` : partyTransactions.map(tx => `
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="p-3 border-r">${tx.date}</td>
+                                        <td class="p-3 border-r font-bold">${tx.id}</td>
+                                        <td class="p-3 border-r font-semibold">
+                                            <span class="px-2 py-0.5 rounded text-xs ${tx.type === 'Cash In' ? 'bg-green-100 text-green-800' : tx.type === 'Cash Out' ? 'bg-rose-100 text-rose-800' : tx.paymentMode === 'Cash' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}">${tx.type === 'Cash In' ? 'રોકડ આવક (Cash In)' : tx.type === 'Cash Out' ? 'રોકડ જાવક (Cash Out)' : tx.paymentMode === 'Cash' ? 'રોકડ (Cash)' : 'ઉધાર (Debit)'}</span>
+                                        </td>
+                                        <td class="p-3 border-r font-semibold">${tx.partyName}</td>
+                                        <td class="p-3 border-r text-xs font-medium text-slate-700 max-w-xs">${tx.itemsSummary}</td>
+                                        <td class="p-3 border-r text-right font-bold text-emerald-700">${tx.debit ? formatCurrency(tx.debit) : '-'}</td>
+                                        <td class="p-3 border-r text-right font-bold text-indigo-700">${tx.credit ? formatCurrency(tx.credit) : '-'}</td>
+                                        <td class="p-3 text-right font-black ${tx.balance >= 0 ? 'text-slate-900' : 'text-rose-600'}">${formatCurrency(tx.balance)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- ITEM LEDGER HTML GENERATOR ---
+        function getItemLedgerHTML() {
+            let itemTransactions = [];
+            let totalPurWeight = 0;
+            let totalSaleWeight = 0;
+            let totalPurAmount = 0;
+            let totalSaleAmount = 0;
+
+            invoices.forEach(inv => {
+                (inv.items || []).forEach(item => {
+                    if(!selectedLedgerItem || item.name === selectedLedgerItem) {
+                        const isSale = inv.type === 'Sale';
+                        const weight = parseFloat(item.weight) || 0;
+                        const total = weight * (parseFloat(item.price) || 0);
+
+                        if(isSale) {
+                            totalSaleWeight += weight;
+                            totalSaleAmount += total;
+                        } else {
+                            totalPurWeight += weight;
+                            totalPurAmount += total;
+                        }
+
+                        itemTransactions.push({
+                            date: inv.date,
+                            billId: inv.id,
+                            partyName: inv.partyName,
+                            type: inv.type,
+                            paymentMode: inv.paymentMode || 'Cash',
+                            itemName: item.name,
+                            weight: weight,
+                            price: item.price,
+                            totalAmount: total
+                        });
+                    }
+                });
+            });
+
+            return `
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print-container">
+                    <div class="no-print mb-4 w-full sm:w-80">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">શાકભાજી આઇટમ પસંદ કરો:</label>
+                        <select onchange="selectedLedgerItem = this.value; renderViewContent();" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <option value="">-- તમામ આઇટમ્સ (All Items) --</option>
+                            ${inventory.map(i => `<option value="${i.name}" ${selectedLedgerItem === i.name ? 'selected' : ''}>${i.name}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="text-center border-b pb-4 mb-4">
+                        <h2 class="text-2xl font-black text-slate-900">|| આઇટમ વાઇઝ લેજર રિપોર્ટ ||</h2>
+                        <p class="text-sm font-bold text-indigo-800">શ્રી ક્રિષ્ના વેજીટેબલ - હળવદ / રણમલપુર</p>
+                        ${selectedLedgerItem ? `<p class="mt-2 text-base font-black bg-indigo-50 text-indigo-900 inline-block px-4 py-1 rounded-full">આઇટમ: ${selectedLedgerItem}</p>` : '<p class="text-xs text-slate-500 mt-1">તમામ શાકભાજી આઇટમનો એકત્રિત હિસાબ</p>'}
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 text-center">
+                        <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-200">
+                            <p class="text-xs font-bold text-indigo-800">કુલ ખરીદી (KG)</p>
+                            <p class="text-lg font-black text-indigo-900">${totalPurWeight.toFixed(2)} KG</p>
+                            <p class="text-xs text-indigo-700 font-bold">${formatCurrency(totalPurAmount)}</p>
+                        </div>
+                        <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200">
+                            <p class="text-xs font-bold text-emerald-800">કુલ વેચાણ (KG)</p>
+                            <p class="text-lg font-black text-emerald-900">${totalSaleWeight.toFixed(2)} KG</p>
+                            <p class="text-xs text-emerald-700 font-bold">${formatCurrency(totalSaleAmount)}</p>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <p class="text-xs font-bold text-slate-600">સ્ટોક તફાવત (KG)</p>
+                            <p class="text-lg font-black text-slate-900">${(totalPurWeight - totalSaleWeight).toFixed(2)} KG</p>
+                        </div>
+                        <div class="bg-amber-50 p-3 rounded-xl border border-amber-200">
+                            <p class="text-xs font-bold text-amber-800">ચોખ્ખો નફો/વેચાણ મૂલ્ય</p>
+                            <p class="text-lg font-black text-amber-900">${formatCurrency(totalSaleAmount - totalPurAmount)}</p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse border border-slate-300 text-sm">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-800 text-xs font-bold border-b border-slate-300">
+                                    <th class="p-3 border-r">તારીખ</th>
+                                    <th class="p-3 border-r">બિલ નં.</th>
+                                    <th class="p-3 border-r">ગ્રાહકનું નામ</th>
+                                    <th class="p-3 border-r">પ્રકાર</th>
+                                    <th class="p-3 border-r">આઇટમ</th>
+                                    <th class="p-3 border-r text-center">વજન (KG)</th>
+                                    <th class="p-3 border-r text-center">ભાવ (₹)</th>
+                                    <th class="p-3 text-right">કુલ રકમ ₹</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                ${itemTransactions.length === 0 ? `
+                                    <tr><td colspan="8" class="p-4 text-center text-slate-400 font-bold">આ આઇટમનો કોઈ વેપાર થયેલ નથી.</td></tr>
+                                ` : itemTransactions.map(tx => `
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="p-3 border-r">${tx.date}</td>
+                                        <td class="p-3 border-r font-bold">${tx.billId}</td>
+                                        <td class="p-3 border-r font-semibold">${tx.partyName}</td>
+                                        <td class="p-3 border-r">
+                                            <span class="text-xs font-bold px-2 py-0.5 rounded ${tx.type === 'Sale' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'}">${tx.type === 'Sale' ? 'વેચાણ' : 'ખરીદ'}</span>
+                                        </td>
+                                        <td class="p-3 border-r font-bold text-slate-800">${tx.itemName}</td>
+                                        <td class="p-3 border-r text-center font-bold">${tx.weight} KG</td>
+                                        <td class="p-3 border-r text-center">₹${tx.price}</td>
+                                        <td class="p-3 text-right font-black ${tx.type === 'Sale' ? 'text-emerald-700' : 'text-indigo-700'}">${formatCurrency(tx.totalAmount)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openInvoiceModal(type = 'Purchase') {
+            isLaborManual = false;
+            document.getElementById('invType').value = type;
+            document.getElementById('modalHeaderTitle').innerText = type === 'Sale' ? 'વેચાણ બિલ (Sale Bill)' : 'ખરીદ બિલ (Purchase Bill)';
+            document.getElementById('invoiceTypeBadge').innerText = type === 'Sale' ? 'વેચાણ બિલ (Sale Bill)' : 'ખરીદ બિલ (Purchase Bill)';
+            document.getElementById('invDate').value = new Date().toISOString().split('T')[0];
+            const prefix = type === 'Sale' ? 'SALE-' : 'PUR-';
+            const nextNum = invoices.length + 1;
+            document.getElementById('invNumber').value = prefix + nextNum;
+            document.getElementById('invPartyName').value = '';
+            document.getElementById('invPartyAddress').value = '';
+            document.getElementById('invPartyMobile').value = '';
+            
+            const partySel = document.getElementById('partyDropdown');
+            partySel.innerHTML = '<option value="">-- ગ્રાહક પસંદ કરો --</option>' + parties.map(p => `<option value="${p.name}">${p.name} (${p.address})</option>`).join('');
+
+            document.getElementById('invoiceItemsTableBody').innerHTML = '';
+            if(inventory.length > 0) {
+                addInvoiceItemRow(inventory[0]);
+            } else {
+                addInvoiceItemRow();
+            }
+            
+            calculateInvoiceTotals();
+            syncPrintHeader();
+            document.getElementById('invoiceModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function openExistingInvoice(invId) {
+            const inv = invoices.find(i => i.id === invId);
+            if(!inv) return;
+
+            isLaborManual = true;
+            document.getElementById('invType').value = inv.type || 'Purchase';
+            document.getElementById('invNumber').value = inv.id;
+            document.getElementById('invDate').value = inv.date;
+            document.getElementById('invPartyName').value = inv.partyName || '';
+            document.getElementById('invPartyAddress').value = inv.partyAddress || '';
+            document.getElementById('invPartyMobile').value = inv.partyMobile || '';
+            document.getElementById('laborChargeInput').value = inv.labor || 0;
+			
+			const pMode = inv.paymentMode || 'Cash';
+            document.querySelectorAll('input[name="paymentMode"]').forEach(radio => {
+                radio.checked = (radio.value === pMode);
+            });
+
+            const tbody = document.getElementById('invoiceItemsTableBody');
+            tbody.innerHTML = '';
+            (inv.items || []).forEach(item => addInvoiceItemRow(item));
+
+            calculateInvoiceTotals();
+            syncPrintHeader();
+            document.getElementById('invoiceModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('invoiceModal').classList.add('hidden');
+        }
+
+        function addInvoiceItemRow(selectedItem = null) {
+            const tbody = document.getElementById('invoiceItemsTableBody');
+            const rowIdx = tbody.children.length + 1;
+            const item = selectedItem || { name: '', packing: 10, qty: 1, price: 25 };
+
+            const tr = document.createElement('tr');
+            tr.className = 'invoice-item-row';
+            tr.innerHTML = `
+                <td class="p-2 border-r border-slate-300 text-center font-bold row-index">${rowIdx}</td>
+                <td class="p-2 border-r border-slate-300 no-print">
+                    <select class="w-full bg-slate-50 border rounded px-2 py-1 text-sm item-selector" onchange="onItemDropdownChanged(this)">
+                        <option value="">-- પસંદ કરો --</option>
+                        ${inventory.map(inv => `<option value="${inv.name}" ${inv.name === item.name ? 'selected' : ''}>${inv.name}</option>`).join('')}
+                    </select>
+                </td>
+                <td class="p-2 border-r border-slate-300">
+                    <input type="text" value="${item.name}" placeholder="વસ્તુનું નામ" class="w-full bg-slate-50 border rounded px-2 py-1 text-sm item-desc">
+                </td>
+                <td class="p-2 border-r border-slate-300 text-center">
+                    <input type="number" value="${item.packing}" class="w-full bg-slate-50 border rounded px-2 py-1 text-sm item-packing text-center" onchange="calcRowWeight(this)">
+                </td>
+                <td class="p-2 border-r border-slate-300 text-center">
+                    <input type="number" value="${item.qty || 1}" class="w-full bg-slate-50 border rounded px-2 py-1 text-sm item-qty text-center" onchange="calcRowWeight(this)">
+                </td>
+                <td class="p-2 border-r border-slate-300 text-center">
+                    <input type="number" value="${item.weight || (item.packing * (item.qty || 1))}" class="w-full bg-slate-50 border rounded px-2 py-1 text-sm item-weight font-bold text-center" onchange="calculateInvoiceTotals()">
+                </td>
+                <td class="p-2 border-r border-slate-300 text-center">
+                    <input type="number" value="${item.price}" class="w-full bg-slate-50 border rounded px-2 py-1 text-sm item-price text-center" onchange="calculateInvoiceTotals()">
+                </td>
+                <td class="p-2 text-right font-bold item-total">₹0.00</td>
+                <td class="p-2 text-center no-print">
+                    <button type="button" onclick="this.closest('tr').remove(); calculateInvoiceTotals();" class="text-rose-500 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+            lucide.createIcons();
+            calculateInvoiceTotals();
+        }
+
+        function onItemDropdownChanged(select) {
+            const item = inventory.find(i => i.name === select.value);
+            if(item) {
+                const tr = select.closest('tr');
+                tr.querySelector('.item-desc').value = item.name;
+                tr.querySelector('.item-packing').value = item.packing;
+                tr.querySelector('.item-price').value = item.price;
+                calcRowWeight(tr.querySelector('.item-packing'));
+            }
+        }
+
+        function calcRowWeight(input) {
+            const tr = input.closest('tr');
+            const packing = parseFloat(tr.querySelector('.item-packing').value) || 0;
+            const qty = parseFloat(tr.querySelector('.item-qty').value) || 0;
+            tr.querySelector('.item-weight').value = packing * qty;
+            calculateInvoiceTotals();
+        }
+
+        function onLaborInputChange() {
+            isLaborManual = true;
+            calculateInvoiceTotals();
+        }
+
+        function calculateInvoiceTotals() {
+            let subTotal = 0;
+            document.querySelectorAll('.invoice-item-row').forEach(tr => {
+                const weight = parseFloat(tr.querySelector('.item-weight').value) || 0;
+                const price = parseFloat(tr.querySelector('.item-price').value) || 0;
+                const total = weight * price;
+                tr.querySelector('.item-total').innerText = '₹' + total.toFixed(2);
+                subTotal += total;
+            });
+
+            const laborInput = document.getElementById('laborChargeInput');
+            if (!isLaborManual && laborInput) {
+                laborInput.value = (subTotal * 0.01).toFixed(2);
+            }
+
+            const labor = parseFloat(laborInput ? laborInput.value : 0) || 0;
+            const grandTotal = subTotal - labor;
+
+            document.getElementById('subTotalDisplay').innerText = formatCurrency(subTotal);
+            document.getElementById('grandTotalDisplay').innerText = formatCurrency(grandTotal);
+        }
+
+        function handleSaveInvoice(e) {
+            e.preventDefault();
+            syncPrintHeader();
+            const id = document.getElementById('invNumber').value;
+            const type = document.getElementById('invType').value;
+            const paymentMode = document.querySelector('input[name="paymentMode"]:checked').value;
+            const partyName = document.getElementById('invPartyName').value;
+            const partyAddress = document.getElementById('invPartyAddress').value;
+            const partyMobile = document.getElementById('invPartyMobile').value;
+            const date = document.getElementById('invDate').value;
+            const labor = parseFloat(document.getElementById('laborChargeInput').value) || 0;
+
+            let items = [];
+            let subTotal = 0;
+            document.querySelectorAll('.invoice-item-row').forEach(tr => {
+                const name = tr.querySelector('.item-desc').value;
+                const packing = parseFloat(tr.querySelector('.item-packing').value) || 0;
+                const qty = parseFloat(tr.querySelector('.item-qty').value) || 0;
+                const weight = parseFloat(tr.querySelector('.item-weight').value) || 0;
+                const price = parseFloat(tr.querySelector('.item-price').value) || 0;
+                
+                if(name) {
+                    items.push({ name, packing, qty, weight, price });
+                    subTotal += weight * price;
+                }
+            });
+
+            const grandTotal = subTotal - labor;
+            const newInv = { id, type, paymentMode, partyName, partyAddress, partyMobile, date, items, subTotal, labor, grandTotal };
+
+            const existingIdx = invoices.findIndex(i => i.id === id);
+            if(existingIdx >= 0) invoices[existingIdx] = newInv;
+            else invoices.unshift(newInv);
+
+            saveData();
+            renderViewContent();
+            showNotification('બિલ સફળતાપૂર્વક સેવ થઈ ગયું!');
+            printInvoicePreview();
+        }
+
+        function sendWhatsAppInvoice() {
+            const partyName = document.getElementById('invPartyName').value;
+            const partyMobile = document.getElementById('invPartyMobile').value ? document.getElementById('invPartyMobile').value.trim() : '';
+            const invNumber = document.getElementById('invNumber').value;
+            const invDate = document.getElementById('invDate').value;
+            const paymentMode = document.querySelector('input[name="paymentMode"]:checked').value;
+
+            const laborElem = document.getElementById('laborChargeInput');
+            const laborCharge = laborElem ? parseFloat(laborElem.value || 0) : 0;
+
+            const grandTotal = document.getElementById('grandTotalDisplay').innerText;
+
+            let message = `*શ્રી ક્રિષ્ના વેજીટેબલ - ઇન્વોઇસ*%0A`;
+            message += `બિલ નં: ${invNumber}%0A`;
+            message += `તારીખ: ${invDate}%0A`;
+            message += `ચુકવણી પ્રકાર: ${paymentMode === 'Cash' ? 'રોકડ (Cash)' : 'ઉધાર (Debit)'}%0A`;
+            message += `ગ્રાહક: ${partyName}%0A-------------------%0A`;
+            message += `*આઇટમ્સની વિગત:*%0A`;
+
+            document.querySelectorAll('.invoice-item-row').forEach((tr, index) => {
+                const name = tr.querySelector('.item-desc') ? tr.querySelector('.item-desc').value : '';
+                const weight = tr.querySelector('.item-weight') ? tr.querySelector('.item-weight').value : 0;
+                const price = tr.querySelector('.item-price') ? tr.querySelector('.item-price').value : 0;
+                const total = parseFloat(weight || 0) * parseFloat(price || 0);
+
+                if (name) {
+                    message += `${index + 1}. ${name} - ${weight} KG @ ₹${price} = ₹${total.toFixed(2)}%0A`;
+                }
+            });
+
+            message += `-------------------%0A`;
+            if (laborCharge > 0) {
+                message += `મજુરી (Labor): ₹${laborCharge.toFixed(2)}%0A`;
+            }
+            message += `કુલ રકમ: *${grandTotal}*%0A%0A`;
+            message += `તમારો ખૂબ ખૂબ આભાર! 🙏`;
+
+            let url = partyMobile ? `https://wa.me/91${partyMobile}?text=${message}` : `https://wa.me/?text=${message}`;
+            window.open(url, '_blank');
+        }
+       
+        function printInvoicePreview() {
+            syncPrintHeader();
+            const invNo = document.getElementById('invNumber').value || 'Invoice';
+            const oldTitle = document.title;
+            document.title = invNo;
+            window.print();
+            setTimeout(() => {
+                document.title = oldTitle;
+            }, 1000);
+        }
+
+        function deleteInvoice(id) {
+            if(confirm('શું તમે આ બિલ ડિલીટ કરવા માગો છો?')) {
+                invoices = invoices.filter(i => i.id !== id);
+                saveData();
+                renderViewContent();
+                showNotification('બિલ ડિલીટ થયું.');
+            }
+        }
+
+        window.onload = () => renderViewContent();
+		
+		function downloadCurrentPage() {
+			const htmlContent = document.documentElement.outerHTML;
+			const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = 'SHREE_KRISHANA_VEGITABLE_ACCOUNTING_MANAGEMENT.html';
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+}
+    </script>
+</body>
+</html>
